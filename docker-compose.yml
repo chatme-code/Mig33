@@ -1,0 +1,52 @@
+services:
+  app:
+    build: .
+    container_name: migme-backend
+    restart: always
+    ports:
+      - "5000:5000"
+      - "9119:9119"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - COOKIE_SECURE=false
+      - JWT_SECRET=${JWT_SECRET}
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - IMAGEKIT_PUBLIC_KEY=${IMAGEKIT_PUBLIC_KEY}
+      - IMAGEKIT_PRIVATE_KEY=${IMAGEKIT_PRIVATE_KEY}
+      - IMAGEKIT_URL_ENDPOINT=${IMAGEKIT_URL_ENDPOINT}
+    depends_on:
+      redis:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - migme-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: migme-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - migme-net
+
+volumes:
+  redis-data:
+
+networks:
+  migme-net:
+    driver: bridge
